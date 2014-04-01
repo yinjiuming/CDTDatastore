@@ -19,19 +19,6 @@
 @interface CDTDatastore (Conflicts)
 
 
-/**
- * Get all the current revisions for a document.
- *
- * If there are >1 revisions in the array, there are conflicts.
- */
--(NSArray*) conflictsForDocument:(CDTDocumentRevision*)revision;
-
-/**
- * Get all the current revisions for a document id
- *
- * If there are >1 revisions in the array, there are conflicts.
- */
--(NSArray*) conflictsForDocumentId:(NSString*)docId;
 
 /**
  * Get all document ids in the datastore that have a conflict in its revision tree.
@@ -45,6 +32,11 @@
  * Resolve conflicts for specified Document using an object
  * that conforms to the CDTConflictResolver protocol
  *
+ * The resolution of the document occurs entirely within a single transaction
+ * to the underlying SQL database. Thus, the delegate CDTConflictResolver -resolve:error
+ * method should be completely deterministic and should never modify or even queue a
+ * new database query. Doing so will create a blocking transaction to the database --
+ * the query will never excute and this method will never return.
  *
  * @param docId id of Document to resolve conflicts
  * @param resolver the CDTConflictResolver-conforming object
@@ -52,10 +44,10 @@
  * @param error  NSError** for error reporting
  * @return YES/NO depending on success.
  *
- * @see com.cloudant.sync.datastore.ConflictResolver
+ * @see CDTConflictResolver
  */
-//-(BOOL) resolveConflictsForDocument:(NSString*)docId
-//                           resolver:(NSObject<CDTConflictResolver>*)resolver
-//                              error:(NSError * __autoreleasing *)error;
+-(BOOL) resolveConflictsForDocument:(NSString*)docId
+                           resolver:(NSObject<CDTConflictResolver>*)resolver
+                              error:(NSError * __autoreleasing *)error;
 
 @end

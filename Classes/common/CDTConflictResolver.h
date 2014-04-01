@@ -40,25 +40,35 @@
  *
  * This method receives the document ID and an NSArray of CDTDocumentRevision
  * objects and is intended to be called by CDTDatastore+Conflicts -resolveConflictsForDocument.
- * The NSArray includes all conflicting revisions of this document,
- * including the current winner, but not in any particular order.
+ * The NSArray includes all conflicting revisions of this document, including the current 
+ * winner, but not in any particular order.
+ *
+ * If there are no conflicts for this document ID, then CDTConflictResolver -resolve:conflicts
+ * will not be called.
  *
  * The implementation of this method should examine the conflicts and return
- * a winning CDTDocumentRevision object.
+ * the winning CDTDocumentRevision object. CDTDocumentRevision is an immutable
+ * object. Until the development of CDTMutableDocumentRevision is complete (it is on
+ * the roadmap to be completed soon), implementations should simply
+ * returning the winning CDTDocumentRevision object. Additionally, due to this
+ * restriction, documents may not be deleted with this conflict resolution mechanism.
  *
  * When called by CDTDatastore+Conflicts -resolveConflictsForDocument,
  * the returned CDTDocumentRevision, barring any errors, 
  * will be added to the document tree as the child of the current winner, and all 
- * the other revisions will be appended by a deleted revision.
+ * other conflicting revisions will be deleted.
  *
- * The output of this method should be deterministic, that is, for the given docId and 
- * conflict set, the same new revision should be returned for all calls. It also shouldn't have 
- * externally visible effects to the database, as we don't guarantee that the 
- * returned revision will be amended to the document tree (there could be an error).
+ * The output of this method should be deterministic. That is, for the given document ID and
+ * conflict set, the same revision should be always be returned. It also shouldn't have
+ * externally visible effects, as we don't guarantee that the returned revision will be 
+ * amended to the document tree (there could be an error).
  *
- * You may also delete the document by setting the CDTDocumentRevision.deleted property.
+ * Additionally, this method should not modify or even attempt to query the database 
+ * (via calls to CDTDatastore methods). Doing so will create a blocking transaction to 
+ * the database and the code will never excute.
  *
- * If returned CDTDocumentRevision* is nil, nothing is changed in the database.
+ * Finally, if nil is returned by the implementation of this method, nothing will be 
+ * changed in the database.
  *
  * @param docId id of the document with conflicts
  * @param conflicts list of conflicted CDTDocumentRevision, including
