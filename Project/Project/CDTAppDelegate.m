@@ -16,6 +16,7 @@
 #import "CDTAppDelegate.h"
 
 #import "CDTCompletedIndexer.h"
+#import "CDTDescriptionIndexer.h"
 
 #import <CloudantSync.h>
 
@@ -43,18 +44,35 @@
 
     error = nil;
     CDTCompletedIndexer *fi = [[CDTCompletedIndexer alloc] init];
-    return [self.indexManager ensureIndexedWithIndexName:@"completed"
+    BOOL isCompletedIndexer = [self.indexManager ensureIndexedWithIndexName:@"completed"
                                                     type:CDTIndexTypeInteger
                                                  indexer:fi
                                                    error:&error];
     if (error) {
-        NSLog(@"Error creating indexManager: %@", error);
+        NSLog(@"Error creating competed indexer: %@", error);
         exit(1);
     }
 
 
+    error = nil;
+    CDTDescriptionIndexer *di = [[CDTDescriptionIndexer alloc] init];
+    BOOL isDescriptionIndexer = [self.indexManager ensureIndexedWithIndexName:@"description"
+                                                    type:CDTIndexTypeString
+                                                 indexer:di
+                                                   error:&error];
+    if (error) {
+        NSLog(@"Error creating description indexer: %@", error);
+        exit(1);
+    }
+
+    error = nil;
+    [self.indexManager updateAllIndexes:&error];
+    if (error) {
+        NSLog(@"Error updating indexes: %@", error);
+        exit(1);
+    }
     
-    return YES;
+    return isCompletedIndexer && isDescriptionIndexer;
 }
 							
 - (void)applicationWillResignActive:(UIApplication *)application
@@ -99,7 +117,7 @@
     
     NSURL *documentsDir = [[fileManager URLsForDirectory:NSDocumentDirectory
                                                inDomains:NSUserDomainMask] lastObject];
-    NSURL *storeURL = [documentsDir URLByAppendingPathComponent: @"cloudant-sync-datastore"];
+    NSURL *storeURL = [documentsDir URLByAppendingPathComponent: @"cloudant-sync-datastore-new"];
     
     BOOL isDir;
     BOOL exists = [fileManager fileExistsAtPath:[storeURL path] isDirectory:&isDir];

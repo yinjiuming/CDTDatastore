@@ -30,6 +30,7 @@
 @property (nonatomic,weak) UISegmentedControl *showCompletedSegmentedControl;
 
 - (void)addTodoItem:(NSString*)item;
+- (void)filterTasks:(NSString *)description;
 - (void)deleteTodoItem:(CDTDocumentRevision*)revision;
 - (void)reloadTasks;
 
@@ -73,6 +74,7 @@
         NSLog(@"Error adding item: %@", error);
     }
 }
+
 
 /**
  Delete a todo item from the database.
@@ -141,6 +143,30 @@
     self.taskRevisions = [NSArray arrayWithArray:tasks];
 }
 
+- (void)filterTasks:(NSString *)description
+{
+    CDTAppDelegate *delegate = (CDTAppDelegate *)[[UIApplication sharedApplication] delegate];
+    CDTIndexManager *m = delegate.indexManager;
+    
+    // Query for completed items based on whether we're showing only completed
+    // items or active ones
+    NSError *error;
+    CDTQueryResult *result = [m queryWithDictionary:@{@"description": description}
+                                              error:&error];
+    if (error) {
+        NSLog(@"Error querying filter for tasks: %@", error);
+        exit(1);
+    }
+    
+    NSMutableArray *tasks = [NSMutableArray array];
+    for (CDTDocumentRevision *revision in result) {
+        [tasks addObject:revision];
+    }
+    
+    self.taskRevisions = [NSArray arrayWithArray:tasks];
+
+}
+
 
 #pragma mark Properties
 
@@ -172,6 +198,18 @@
     self.addTodoTextField.text = @"";
 }
 
+- (IBAction)findTodoButtonTap:(NSObject *)sender
+{
+    NSString *description = self.findTodoTextField.text;
+    if (description.length == 0) {
+        [self reloadTasks];  //if empty, reload all tasks
+        [self.tableView reloadData];
+        return;
+    }
+    NSLog(@"Filtering for string: %@", description);
+    [self filterTasks:description];
+    [self.tableView reloadData];
+}
 /**
  Handler for clicking the sync button. Starts a sync using the
  CDTTodoReplicator class.
@@ -187,6 +225,7 @@
         });
     });
 }
+
 
 /**
  Handler for a change in the segmented view controller. Swaps between showing
@@ -252,12 +291,12 @@
 #pragma mark UITableView data source methods
 
 /**
- Section 0 contains the Add and Toggle View cells, so 2 cells there.
+ Section 0 contains the Add, Filter and Toggle View cells, so 3 cells there.
  Section 1 contains all the tasks visible in this view.
  */
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     if (section == 0) {
-        return 2;
+        return 3;
     } else {
         int count = self.taskRevisions.count;
         if (count < 0) { // error
@@ -286,7 +325,14 @@
             UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"AddCell"];
             self.addTodoTextField = (UITextField*)[cell viewWithTag:100];
             return cell;
-        } else  {
+        }
+        else if (indexPath.row == 1){
+            // Filter cell
+            UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"FilterCell"];
+            self.findTodoTextField = (UITextField*)[cell viewWithTag:200];
+            return cell;
+        }
+        else  {
             // Add cell
             UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"CompletedToggleCell"];
 

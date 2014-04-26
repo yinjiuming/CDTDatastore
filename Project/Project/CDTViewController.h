@@ -18,9 +18,12 @@
 @interface CDTViewController : UITableViewController
 
 @property (nonatomic, strong) IBOutlet UITextField *addTodoTextField;
--(IBAction)addTodoButtonTap:(id)sender;
 
+@property (nonatomic, strong) IBOutlet UITextField *findTodoTextField;
+
+-(IBAction)addTodoButtonTap:(id)sender;
 
 -(IBAction)replicateTapped:(id)sender;
 
+- (IBAction)findTodoButtonTap:(id)sender;
 @end

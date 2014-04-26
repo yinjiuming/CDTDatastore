@@ -27,6 +27,7 @@
 		27C1CDF0184E2D9C000604EF /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 27C1CDEE184E2D9C000604EF /* InfoPlist.strings */; };
 		27C1CDF2184E2D9C000604EF /* ProjectTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 27C1CDF1184E2D9C000604EF /* ProjectTests.m */; };
 		9F954F9F18AB5B5A00368057 /* libPods-ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9F954F9E18AB5B5A00368057 /* libPods-ios.a */; };
+		9FF4E891190AFA9500AC333C /* CDTDescriptionIndexer.m in Sources */ = {isa = PBXBuildFile; fileRef = 9FF4E890190AFA9500AC333C /* CDTDescriptionIndexer.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -67,6 +68,8 @@
 		27C1CDF1184E2D9C000604EF /* ProjectTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ProjectTests.m; sourceTree = "<group>"; };
 		4D0E3AC9C50B4EBE8CF4AF2B /* Pods.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.xcconfig; path = Pods/Pods.xcconfig; sourceTree = "<group>"; };
 		9F954F9E18AB5B5A00368057 /* libPods-ios.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libPods-ios.a"; path = "../Tests/Pods/build/Debug-iphoneos/libPods-ios.a"; sourceTree = "<group>"; };
+		9FF4E88F190AFA9400AC333C /* CDTDescriptionIndexer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CDTDescriptionIndexer.h; sourceTree = "<group>"; };
+		9FF4E890190AFA9500AC333C /* CDTDescriptionIndexer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CDTDescriptionIndexer.m; sourceTree = "<group>"; };
 		C4042E7D26A74D4D86B965BA /* Pods-ios.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ios.xcconfig"; path = "Pods/Pods-ios.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -152,6 +155,8 @@
 				27C1CDCD184E2D9C000604EF /* Supporting Files */,
 				2796596D18D9DE1900A6C32F /* CDTCompletedIndexer.h */,
 				2796596E18D9DE1900A6C32F /* CDTCompletedIndexer.m */,
+				9FF4E88F190AFA9400AC333C /* CDTDescriptionIndexer.h */,
+				9FF4E890190AFA9500AC333C /* CDTDescriptionIndexer.m */,
 			);
 			path = Project;
 			sourceTree = "<group>";
@@ -324,6 +329,7 @@
 				2799959618D9D19D0042301D /* CDTTodoReplicator.m in Sources */,
 				27C1CDD3184E2D9C000604EF /* main.m in Sources */,
 				27C1CDDD184E2D9C000604EF /* CDTViewController.m in Sources */,
+				9FF4E891190AFA9500AC333C /* CDTDescriptionIndexer.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
