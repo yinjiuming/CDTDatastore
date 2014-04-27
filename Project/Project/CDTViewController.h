@@ -21,9 +21,10 @@
 
 @property (nonatomic, strong) IBOutlet UITextField *findTodoTextField;
 
+- (IBAction)filterByContent:(id)sender;
+
 -(IBAction)addTodoButtonTap:(id)sender;
 
 -(IBAction)replicateTapped:(id)sender;
 
-- (IBAction)findTodoButtonTap:(id)sender;
 @end

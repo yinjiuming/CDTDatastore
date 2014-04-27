@@ -16,7 +16,7 @@
 #import "CDTAppDelegate.h"
 
 #import "CDTCompletedIndexer.h"
-#import "CDTDescriptionIndexer.h"
+#import "CDTTopLevelKeyIndexer.h"
 
 #import <CloudantSync.h>
 
@@ -55,10 +55,10 @@
 
 
     error = nil;
-    CDTDescriptionIndexer *di = [[CDTDescriptionIndexer alloc] init];
+    CDTTopLevelKeyIndexer *tlki = [[CDTTopLevelKeyIndexer alloc] init];
     BOOL isDescriptionIndexer = [self.indexManager ensureIndexedWithIndexName:@"description"
                                                     type:CDTIndexTypeString
-                                                 indexer:di
+                                                 indexer:tlki
                                                    error:&error];
     if (error) {
         NSLog(@"Error creating description indexer: %@", error);

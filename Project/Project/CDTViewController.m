@@ -30,7 +30,6 @@
 @property (nonatomic,weak) UISegmentedControl *showCompletedSegmentedControl;
 
 - (void)addTodoItem:(NSString*)item;
-- (void)filterTasks:(NSString *)description;
 - (void)deleteTodoItem:(CDTDocumentRevision*)revision;
 - (void)reloadTasks;
 
@@ -127,8 +126,15 @@
 
     // Query for completed items based on whether we're showing only completed
     // items or active ones
+    //
     NSError *error;
-    CDTQueryResult *result = [m queryWithDictionary:@{@"completed": @(self.showOnlyCompleted)}
+    NSString *filtercontent = self.findTodoTextField.text;
+    NSMutableDictionary *query = [NSMutableDictionary dictionaryWithDictionary:@{@"completed":@(self.showOnlyCompleted)}];
+    
+    if(filtercontent.length != 0)
+       [query setObject:filtercontent forKey:@"description"];
+    
+    CDTQueryResult *result = [m queryWithDictionary:query
                                               error:&error];
     if (error) {
         NSLog(@"Error querying for tasks: %@", error);
@@ -143,29 +149,7 @@
     self.taskRevisions = [NSArray arrayWithArray:tasks];
 }
 
-- (void)filterTasks:(NSString *)description
-{
-    CDTAppDelegate *delegate = (CDTAppDelegate *)[[UIApplication sharedApplication] delegate];
-    CDTIndexManager *m = delegate.indexManager;
-    
-    // Query for completed items based on whether we're showing only completed
-    // items or active ones
-    NSError *error;
-    CDTQueryResult *result = [m queryWithDictionary:@{@"description": description}
-                                              error:&error];
-    if (error) {
-        NSLog(@"Error querying filter for tasks: %@", error);
-        exit(1);
-    }
-    
-    NSMutableArray *tasks = [NSMutableArray array];
-    for (CDTDocumentRevision *revision in result) {
-        [tasks addObject:revision];
-    }
-    
-    self.taskRevisions = [NSArray arrayWithArray:tasks];
 
-}
 
 
 #pragma mark Properties
@@ -188,6 +172,7 @@
 /**
  Adds a task using the text entered by the user.
  */
+
 - (void)addTodoButtonTap:(NSObject *)sender {
     NSString *description = self.addTodoTextField.text;
     if (description.length == 0) { return; }  // don't create empty tasks
@@ -198,16 +183,10 @@
     self.addTodoTextField.text = @"";
 }
 
-- (IBAction)findTodoButtonTap:(NSObject *)sender
+- (IBAction)filterByContent:(NSObject *)sender
 {
-    NSString *description = self.findTodoTextField.text;
-    if (description.length == 0) {
-        [self reloadTasks];  //if empty, reload all tasks
-        [self.tableView reloadData];
-        return;
-    }
-    NSLog(@"Filtering for string: %@", description);
-    [self filterTasks:description];
+    NSLog(@"Filter button pushed");
+    [self reloadTasks];
     [self.tableView reloadData];
 }
 /**

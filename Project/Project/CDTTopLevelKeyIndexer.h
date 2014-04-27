@@ -1,5 +1,5 @@
 //
-//  CDTDescriptionIndexer.h
+//  CDTTopLevelKeyIndexer.h
 //  Project
 //
 //  Created by Adam Cox on 4/25/14.
@@ -10,6 +10,6 @@
 
 #import <CloudantSync.h>
 
-@interface CDTDescriptionIndexer : NSObject<CDTIndexer>
+@interface CDTTopLevelKeyIndexer : NSObject<CDTIndexer>
 
 @end
