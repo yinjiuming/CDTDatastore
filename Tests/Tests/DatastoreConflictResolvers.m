@@ -94,3 +94,30 @@
 }
 @end
 
+#pragma mark CDTTestSpecificJSONDocumentResolver
+@implementation CDTTestSpecificJSONDocumentResolver
+
+-(instancetype) initWithDictionary:(NSDictionary *)documentBody
+{
+    self = [super init];
+    if (self) {
+        _documentBody = documentBody;
+    }
+    return self;
+}
+
+-(CDTDocumentRevision *)resolve:(NSString*)docId
+                      conflicts:(NSArray*)conflicts
+{
+    for(CDTDocumentRevision *aRev in conflicts){
+        if ([[aRev documentAsDictionary] isEqualToDictionary:self.documentBody]) {
+            return aRev;
+           }
+    }
+    
+    return nil;
+}
+
+
+@end
+

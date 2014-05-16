@@ -56,3 +56,14 @@
 */
 @interface CDTTestDoesNoResolutionResolver  : NSObject<CDTConflictResolver>
 @end
+
+
+/**
+ This class chooses revisions based upon the content of the JSON body of the revision. For 
+ each revision, it calls CDTDocumentRevision -documentAsDictionary and compares it to 
+ the NSDictionary object supplied with the init below.
+ */
+@interface CDTTestSpecificJSONDocumentResolver  : NSObject<CDTConflictResolver>
+@property (nonatomic, strong) NSDictionary* documentBody;
+-(instancetype) initWithDictionary:(NSDictionary *)documentBody;
+@end

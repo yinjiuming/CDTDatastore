@@ -15,6 +15,7 @@
 
 #import "CDTDatastore+Conflicts.h"
 #import "CDTDatastore+Internal.h"
+#import "CDTDatastore+Attachments.h"
 #import "CDTDocumentRevision.h"
 #import "TD_Revision.h"
 #import "TD_Database+Conflicts.h"
@@ -106,16 +107,33 @@
         else {
             CDTDocumentBody *body = [[CDTDocumentBody alloc] initWithDictionary:resolvedRev.td_rev.properties];
             BOOL rollback = NO;
-            [self updateDocumentWithId:docId
-                               prevRev:currentWinningTDRev.revID
-                                  body:body
-                         inTransaction:db
-                              rollback:&rollback
-                                 error:&localError];
+            CDTDocumentRevision *newWinningRev = [self updateDocumentWithId:docId
+                                                                    prevRev:currentWinningTDRev.revID
+                                                                       body:body
+                                                              inTransaction:db
+                                                                   rollback:&rollback
+                                                                      error:&localError];
             
             //at this point, localError.code will not be exactly the same as the TDStatus
             if (localError) {
-                return localError.code;
+                return (TDStatus)localError.code;
+            }
+            
+            NSArray *attachments = [self attachmentsForRev:resolvedRev
+                                                     error:&localError];
+            
+            if (localError) {
+                return (TDStatus)localError.code;
+            }
+            
+            if ([attachments count]) {
+                [self updateAttachments:attachments forRev:newWinningRev error:&localError];
+                if (localError) {
+                    return (TDStatus)localError.code;
+                }
+            }
+            else {
+                
             }
         }
         

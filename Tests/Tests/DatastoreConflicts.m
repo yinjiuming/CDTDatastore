@@ -22,6 +22,7 @@
 #import "CDTDatastoreManager.h"
 #import "CDTDatastore+Conflicts.h"
 #import "CDTDatastore+Internal.h"
+#import "CDTDatastore+Attachments.h"
 #import "CDTDocumentBody.h"
 #import "CDTDocumentRevision.h"
 #import "CDTConflictResolver.h"
@@ -36,6 +37,8 @@
 #import "TD_Body.h"
 #import "CollectionUtils.h"
 #import "DBQueryUtils.h"
+#import "CDTAttachment.h"
+#import <MRDatabaseContentChecker.h>
 
 @interface DatastoreConflicts : CloudantSyncTests
 @property (nonatomic,strong) CDTDatastore *datastore;
@@ -74,12 +77,22 @@
   \
     ---- 2-b (seq 4)
  
- There are only two conflicting revisions, 3-a and 2-b,
- because 2-c is deleted.
+ There are only two conflicting revisions, 3-a and 2-b, because 2-c is deleted.
+ 
+ For each revision, the content of the JSON body (the NSDictionary returned by CDTDocumentRevision
+ -documentAsDicitionary), will be {fooN.x:barN.x} where N = 1,2,3 and x = a, b, c. 
+ For example, the JSON body for 1-a is {foo1.a:bar1.a}, and the body for 2-c is {foo2.c:bar2.c}. 
+ This can be used to check for the content of each revision in the tests.
+ 
+ If withAttachment is YES, an image file is attached to revision 2-a. Note that due to the
+ implementation of attaching data to documents, the document body of 2-a will be {foo1.a:bar1.a}.
+ 
 */
 -(void) addConflictingDocumentWithId:(NSString *)anId
                          toDatastore:(CDTDatastore*)datastore
+                 withAttachment:(BOOL)attach
 {
+    
     
     STAssertNotNil(anId, @"ID string is nil");
     
@@ -90,13 +103,30 @@
                                       body:body
                                      error:&error];
     
-    
     error = nil;
-    body = [[CDTDocumentBody alloc] initWithDictionary:@{@"foo2.a":@"bar2.a"}];
-    CDTDocumentRevision *rev2a = [datastore updateDocumentWithId:rev1.docId
-                                                         prevRev:rev1.revId
-                                                            body:body
-                                                           error:&error];
+    CDTDocumentRevision *rev2a = nil;
+    if (attach) {
+
+        NSBundle *bundle = [NSBundle bundleForClass:[self class]];
+        NSString *imagePath = [bundle pathForResource:@"bonsai-boston" ofType:@"jpg"];
+        NSData *data = [NSData dataWithContentsOfFile:imagePath];
+        
+        CDTAttachment *attachment = [[CDTUnsavedDataAttachment alloc] initWithData:data
+                                                                              name:@"bonsai-boston"
+                                                                              type:@"image/jpg"];
+        
+        rev2a = [self.datastore updateAttachments:@[attachment]
+                                           forRev:rev1
+                                            error:nil];
+
+    }
+    else{
+        body = [[CDTDocumentBody alloc] initWithDictionary:@{@"foo2.a":@"bar2.a"}];
+        rev2a = [datastore updateDocumentWithId:rev1.docId
+                                        prevRev:rev1.revId
+                                           body:body
+                                          error:&error];
+    }
     
     error = nil;
     body = [[CDTDocumentBody alloc] initWithDictionary:@{@"foo3.a":@"bar3.a"}];
@@ -143,10 +173,34 @@
     CDTDocumentRevision *rev2c = [[CDTDocumentRevision alloc] initWithTDRevision:td_rev];
     STAssertNotNil(rev2c, @"CDTDocumentRevision object was nil");
     
-    TDStatus statusResults = [tdstore compact];
-    STAssertTrue(statusResults == kTDStatusOK, @"TDStatusAsNSError: %@",
-                 TDStatusToNSError( statusResults, nil));
+    //TDStatus statusResults = [tdstore compact];
+    //STAssertTrue(statusResults == kTDStatusOK, @"TDStatusAsNSError: %@",
+    //             TDStatusToNSError( statusResults, nil));
     
+}
+
+
+/**
+ creates a new document with the following document tree
+ 
+  ----- 2-c (seq 5, deleted = 1)
+ /
+ 1-a (seq 1) --- 2-a (seq 2) --- 3-a (seq 3)
+ \
+  ---- 2-b (seq 4)
+ 
+ There are only two conflicting revisions, 3-a and 2-b, because 2-c is deleted.
+ 
+ For each revision, the content of the JSON body is {fooN.x:barN.x} where
+ N = 1,2,3 and x = a, b, c. For example, the JSON body for 1-a is {foo1.a:bar1.a},
+ and the body for 2-c is {foo2.c:bar2.c}. This can be used to check for the 
+ content of each revision in the tests.
+ */
+-(void) addConflictingDocumentWithId:(NSString *)anId
+                         toDatastore:(CDTDatastore*)datastore
+{
+    
+    [self addConflictingDocumentWithId:anId toDatastore:datastore withAttachment:NO];
 }
 
 
@@ -166,6 +220,16 @@
 -(void)testCreateConflict
 {
     [self addConflictingDocumentWithId:@"doc0" toDatastore:self.datastore];
+    [self.dbutil printDocsAndRevs];
+
+}
+
+-(void)testCreateConflictWithAttachment
+{
+    [self addConflictingDocumentWithId:@"doc0" toDatastore:self.datastore withAttachment:YES];
+    [self.dbutil printDocsAndRevs];
+    [self.dbutil printAllRowsForTable:@"attachments"];
+
 }
 
 -(void)testFindAllConflicts
@@ -432,6 +496,111 @@
         STAssertTrue([[rev documentAsDictionary] isEqualToDictionary: myResolver.resolvedDocumentAsDictionary],
                      @"Unexpected document: %@", [rev documentAsDictionary]);
     }
+}
+
+- (void) testResolveConflictWithAttachmentWithBiggestRev
+{
+    
+    //add conflicting document with attachement
+    [self addConflictingDocumentWithId:@"doc0" toDatastore:self.datastore withAttachment:YES];
+    
+    CDTTestBiggestRevResolver *myResolver = [[CDTTestBiggestRevResolver alloc] init];
+    
+    for (NSString *docId in [self.datastore getConflictedDocumentIds]) {
+        NSError *error;
+        STAssertTrue([self.datastore resolveConflictsForDocument:docId
+                                                        resolver:myResolver
+                                                           error:&error],
+                     @"resolve failure: %@", docId);
+        STAssertNil(error, @"Error resolving document. %@", error);
+    }
+    
+    //make sure there are no more conflicted documents
+    NSArray *conflictedDocs = [self.datastore getConflictedDocumentIds];
+    STAssertTrue(conflictedDocs.count == 0,
+                 @"Found %lu conflicted docs", (unsigned long)conflictedDocs.count);
+    
+    //make sure that doc0 has the proper rev and content
+    //The winning rev should be generation 4 and should have content of {foo3.a:bar3.a}
+    //It should also have the bonsai-boston attached image.
+    NSError *error = nil;
+    CDTDocumentRevision *rev = [self.datastore getDocumentWithId:@"doc0" error:&error];
+    STAssertNil(error, @"Error getting document");
+    STAssertNotNil(rev, @"CDTDocumentRevision object was nil");
+    STAssertTrue([TD_Revision generationFromRevID:rev.revId] == 4, @"Unexpected RevId: %@", rev.revId);
+    STAssertTrue([[rev documentAsDictionary] isEqualToDictionary:myResolver.resolvedDocumentAsDictionary],
+                     @"Unexpected document: %@", [rev documentAsDictionary]);
+        
+    NSBundle *bundle = [NSBundle bundleForClass:[self class]];
+    NSString *imagePath = [bundle pathForResource:@"bonsai-boston" ofType:@"jpg"];
+    NSData *imageData = [NSData dataWithContentsOfFile:imagePath];
+        
+    [self.dbutil.queue inDatabase:^(FMDatabase *db ) {
+        NSArray *expectedRows = @[
+                                  @[@"sequence", @"filename", @"type", @"length", @"revpos", @"encoding", @"encoded_length"],
+                                  @[@2, @"bonsai-boston", @"image/jpg", @(imageData.length), @2, @0, @(imageData.length)],
+                                  @[@3, @"bonsai-boston", @"image/jpg", @(imageData.length), @2, @0, @(imageData.length)],
+                                  @[@6, @"bonsai-boston", @"image/jpg", @(imageData.length), @2, @0, @(imageData.length)]
+                                  ];
+            
+        MRDatabaseContentChecker *dc = [[MRDatabaseContentChecker alloc] init];
+        NSError *validationError;
+        STAssertTrue([dc checkDatabase:db
+                                 table:@"attachments"
+                               hasRows:expectedRows
+                                 error:&validationError],
+                     [dc formattedErrors:validationError]);
+    }];
+
+    [self.dbutil printDocsAndRevs];
+    [self.dbutil printAllRowsForTable:@"attachments"];
+}
+
+
+- (void) testResolveConflictWithAttachmentForRev2b
+{
+    
+    //add conflicting document with attachement
+    [self addConflictingDocumentWithId:@"doc0" toDatastore:self.datastore withAttachment:YES];
+    [self.dbutil printDocsAndRevs];
+    [self.dbutil printAllRowsForTable:@"attachments"];
+    
+    CDTTestSpecificJSONDocumentResolver *myResolver = [[CDTTestSpecificJSONDocumentResolver alloc]
+                                                       initWithDictionary:@{@"foo2.b":@"bar2.b"}];
+    
+    for (NSString *docId in [self.datastore getConflictedDocumentIds]) {
+        NSError *error;
+        STAssertTrue([self.datastore resolveConflictsForDocument:docId
+                                                        resolver:myResolver
+                                                           error:&error],
+                     @"resolve failure: %@", docId);
+        STAssertNil(error, @"Error resolving document. %@", error);
+    }
+    
+    [self.dbutil printDocsAndRevs];
+    [self.dbutil printAllRowsForTable:@"attachments"];
+    
+    //make sure there are no more conflicting documents
+    NSArray *conflictedDocs = [self.datastore getConflictedDocumentIds];
+    STAssertTrue(conflictedDocs.count == 0,
+                 @"Found %lu conflicted docs", (unsigned long)conflictedDocs.count);
+    
+    //make sure that doc0 has the proper rev and content
+    //The winning rev should be generation 4 and should have content of {foo2.b:bar2.b}
+    //It should not have the bonsai-boston attached image...??
+    NSError *error = nil;
+    CDTDocumentRevision *rev = [self.datastore getDocumentWithId:@"doc0" error:&error];
+    STAssertNil(error, @"Error getting document");
+    STAssertNotNil(rev, @"CDTDocumentRevision object was nil");
+    STAssertTrue([TD_Revision generationFromRevID:rev.revId] == 4, @"Unexpected RevId: %@", rev.revId);
+    STAssertTrue([[rev documentAsDictionary] isEqualToDictionary:@{@"foo2.b":@"bar2.b"}],
+                 @"Unexpected document: %@", [rev documentAsDictionary]);
+    
+    NSArray *attachments = [self.datastore attachmentsForRev:rev
+                                                       error:nil];
+
+    STAssertEquals((NSUInteger)0, [attachments count], @"Wrong number of attachments");
+    
 }
 
 
