@@ -28,7 +28,7 @@
     STAssertNil(error, @"CDTDatastoreManager had error");
     STAssertNotNil(self.factory, @"Factory is nil");
 
-    self.remoteRootURL = [NSURL URLWithString:@"http://localhost:5984"];
+    self.remoteRootURL = [NSURL URLWithString:@"http://localhost:5984"]; //[NSURL URLWithString:@"http://rhyshort.cloudant.com:80"]; //
     self.remoteDbPrefix = @"replication-acceptance";
 }
 

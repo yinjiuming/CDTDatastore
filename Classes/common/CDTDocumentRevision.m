@@ -49,6 +49,11 @@
     return self.td_rev.docID;
 }
 
+-(NSError*)replicationError
+{
+    return self.td_rev.replicationError;
+}
+
 -(NSString*)revId
 {
     return self.td_rev.revID;

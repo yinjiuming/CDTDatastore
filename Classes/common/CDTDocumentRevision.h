@@ -36,6 +36,7 @@
 
 @property (nonatomic,strong,readonly) TD_Revision *td_rev;
 
+@property (nonatomic,strong,readonly) NSError *replicationError;
 
 -(id)initWithTDRevision:(TD_Revision*)rev;
 

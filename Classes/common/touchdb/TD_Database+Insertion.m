@@ -544,6 +544,7 @@ NSString* const TD_DatabaseChangeNotification = @"TD_DatabaseChange";
         return nil;
     
     //// EPILOGUE: A change notification is sent...
+    newRev.replicationError = revToInsert.replicationError;
     [self notifyChange: newRev source: nil winningRev: winningRev];
     return newRev;
 }

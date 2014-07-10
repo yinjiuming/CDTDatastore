@@ -38,6 +38,8 @@ typedef SInt64 SequenceNumber;
 @property (readonly) bool deleted;
 @property bool missing;
 
+@property (strong) NSError* replicationError;
+
 @property (strong) TD_Body* body;
 @property (copy) NSDictionary* properties;
 @property (copy) NSData* asJSON;

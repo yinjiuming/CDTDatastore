@@ -14,7 +14,6 @@
 //  and limitations under the License.
 
 #import "CDTReplicator.h"
-
 #import "CDTDatastore.h"
 #import "CDTDocumentRevision.h"
 
@@ -231,7 +230,8 @@ const NSString *CDTReplicatorLog = @"CDTReplicator";
     BOOL erroringTransition = (stateChanged && self.state == CDTReplicatorStateError &&
                                [self isActiveState:oldState]);
     if (erroringTransition && [delegate respondsToSelector:@selector(replicatorDidError:info:)]) {
-        [delegate replicatorDidError:self info:nil];
+        [delegate replicatorDidError:self
+                                info:rev.replicationError];
     }
 }
 

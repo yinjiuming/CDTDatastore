@@ -218,6 +218,7 @@ NSString* const kTDReplicatorDatabaseName = @"_replicator";
             break;
         }
         TD_Revision* updatedRev = [TD_Revision revisionWithProperties: updatedProperties];
+        updatedRev.replicationError = currentRev.replicationError; //I tihnk this is a little hacky
         
         // Attempt to PUT the updated revision:
         _updateInProgress = YES;
@@ -249,9 +250,10 @@ NSString* const kTDReplicatorDatabaseName = @"_replicator";
     NSString* state;
     if (repl.running)
         state = @"triggered";
-    else if (repl.error)
+    else if (repl.error){
         state = @"error";
-    else
+        rev.replicationError = repl.error;
+    } else
         state = @"completed";
     
     NSMutableDictionary* update = $mdict({@"_replication_id", repl.sessionID});
@@ -264,7 +266,7 @@ NSString* const kTDReplicatorDatabaseName = @"_replicator";
                                      @"changesProcessed": @(repl.changesProcessed),
                                      @"changesTotal": @(repl.changesTotal)
                                      };
-
+  
     [self updateDoc: rev withProperties: update];
 }
 
