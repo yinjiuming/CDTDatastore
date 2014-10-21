@@ -315,6 +315,7 @@ static NSUInteger largeRevTreeSize = 1500;
         NSLog(@"      changesTotal: %ld", replicator.changesTotal);
     }
     
+    NSLog(@"--> %@", [CDTReplicator stringForReplicatorState:replicator.state]);
     NSLog(@"changesProcessed: %ld", replicator.changesProcessed);
     NSLog(@"    changesTotal: %ld", replicator.changesTotal);
     
@@ -322,7 +323,7 @@ static NSUInteger largeRevTreeSize = 1500;
 
 -(void) testStopPushReplicationWithFactory
 {
-    [self createLocalDocs:10000];
+    [self createLocalDocs:8000];
     CDTPushReplication *push = [CDTPushReplication replicationWithSource:self.datastore
                                                                   target:self.primaryRemoteDatabaseURL];
     
@@ -330,7 +331,7 @@ static NSUInteger largeRevTreeSize = 1500;
     
     [replicator startWithError:nil];
     
-    [NSThread sleepForTimeInterval:2.0f];
+    [NSThread sleepForTimeInterval:1.0f];
     [self.replicatorFactory stop];
     
     while (replicator.isActive) {

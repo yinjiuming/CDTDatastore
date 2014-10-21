@@ -286,8 +286,8 @@ NSString* TDReplicatorStartedNotification = @"TDReplicatorStarted";
     [self stopRemoteRequests];
     [NSObject cancelPreviousPerformRequestsWithTarget: self
                                              selector: @selector(retryIfReady) object: nil];
-    if (_running && _asyncTaskCount == 0)
-        [self stopped];
+    //if (_running && _asyncTaskCount == 0)
+    [self stopped];
 }
 
 

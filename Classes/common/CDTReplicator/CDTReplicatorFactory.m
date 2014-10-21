@@ -36,6 +36,8 @@ static NSString* const CDTReplicatorFactoryErrorDomain = @"CDTReplicatorFactoryE
 
 @property (nonatomic,strong) TDReplicatorManager *replicatorManager;
 
+@property (nonatomic, strong) NSMutableArray* replicatorsUnderManagement;
+
 @end
 
 @implementation CDTReplicatorFactory
@@ -46,9 +48,10 @@ static NSString* const CDTReplicatorFactoryErrorDomain = @"CDTReplicatorFactoryE
 
     self = [super init];
     if (self) {
-        self.manager = dsManager;
+        _manager = dsManager;
         TD_DatabaseManager *dbManager = dsManager.manager;
-        self.replicatorManager = [[TDReplicatorManager alloc] initWithDatabaseManager:dbManager];
+        _replicatorManager = [[TDReplicatorManager alloc] initWithDatabaseManager:dbManager];
+        _replicatorsUnderManagement = [[NSMutableArray alloc] init];
     }
     return self;
 }
@@ -58,7 +61,14 @@ static NSString* const CDTReplicatorFactoryErrorDomain = @"CDTReplicatorFactoryE
 }
 
 - (void) stop {
+    @synchronized(self){
+        for(CDTReplicator *replicator in self.replicatorsUnderManagement){
+            [replicator stop];
+        }
+        [self.replicatorsUnderManagement removeAllObjects];
+    }
     [self.replicatorManager stop];
+
 }
 
 - (void) dealloc {
@@ -103,6 +113,14 @@ static NSString* const CDTReplicatorFactoryErrorDomain = @"CDTReplicatorFactoryE
         }
             
         return nil;
+    }
+    @synchronized(self){
+        //now we have strong ref to CDTReplicator.
+        //although, this solves the problem where the dev needs to keep a strong reference
+        //to any CDTReplicator that it makes. If we keep this array of objects, the dev no longer
+        //needs to keep a strong ref around (of course, they need to keep the pointer if they
+        //want to stop that individual replicator)
+        [self.replicatorsUnderManagement addObject:replicator];
     }
     
     return replicator;
