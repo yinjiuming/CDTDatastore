@@ -295,6 +295,57 @@ static NSUInteger largeRevTreeSize = 1500;
                    @"Wrong error code: %ld", mydel.error.code);
 }
 
+-(void) testStopPullReplicationWithFactory
+{
+    [self createRemoteDocs:10000];
+    CDTPullReplication *pull = [CDTPullReplication replicationWithSource:self.primaryRemoteDatabaseURL
+                                                                  target:self.datastore];
+    
+    CDTReplicator *replicator =  [self.replicatorFactory oneWay:pull error:nil];
+    
+    [replicator startWithError:nil];
+
+    [NSThread sleepForTimeInterval:2.0f];
+    [self.replicatorFactory stop];
+    
+    while (replicator.isActive) {
+        [NSThread sleepForTimeInterval:1.0f];
+        NSLog(@"--> %@", [CDTReplicator stringForReplicatorState:replicator.state]);
+        NSLog(@"  changesProcessed: %ld", replicator.changesProcessed);
+        NSLog(@"      changesTotal: %ld", replicator.changesTotal);
+    }
+    
+    NSLog(@"changesProcessed: %ld", replicator.changesProcessed);
+    NSLog(@"    changesTotal: %ld", replicator.changesTotal);
+    
+}
+
+-(void) testStopPushReplicationWithFactory
+{
+    [self createLocalDocs:10000];
+    CDTPushReplication *push = [CDTPushReplication replicationWithSource:self.datastore
+                                                                  target:self.primaryRemoteDatabaseURL];
+    
+    CDTReplicator *replicator =  [self.replicatorFactory oneWay:push error:nil];
+    
+    [replicator startWithError:nil];
+    
+    [NSThread sleepForTimeInterval:2.0f];
+    [self.replicatorFactory stop];
+    
+    while (replicator.isActive) {
+        [NSThread sleepForTimeInterval:1.0f];
+        NSLog(@"--> %@", [CDTReplicator stringForReplicatorState:replicator.state]);
+        NSLog(@"  changesProcessed: %ld", replicator.changesProcessed);
+        NSLog(@"      changesTotal: %ld", replicator.changesTotal);
+    }
+    
+    NSLog(@"changesProcessed: %ld", replicator.changesProcessed);
+    NSLog(@"    changesTotal: %ld", replicator.changesTotal);
+    
+}
+
+
 /**
  As per testPullLotsOfOneRevDocuments but ensuring indexes are updated.
  NB this currently about twice as slow as without indexing.
