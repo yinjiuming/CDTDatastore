@@ -11,9 +11,23 @@
 #import "CDTDatastoreManager.h"
 #import "CDTDatastore.h"
 
+#import "CDTlogging.h"
+#import "DDTTYLogger.h"
+
 #import <UNIRest.h>
 
 @implementation CloudantReplicationBase
+
++(void)initialize
+{
+    
+    if (self == [CloudantReplicationBase self]) {
+        [DDLog addLogger:[DDTTYLogger sharedInstance]];
+        for(int i=0;i<sizeof(CDTLoggingLevels);i++){
+            CDTLoggingLevels[i] = LOG_LEVEL_ALL;
+        }
+    }
+}
 
 - (void)setUp
 {
