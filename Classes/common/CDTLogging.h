@@ -32,7 +32,7 @@
 #define START_CONTEXT INDEX_LOG_CONTEXT
 #define END_CONTEXT TD_VIEW_CONTEXT
 
-static int CDTLoggingLevels[] = {[0 ... END_CONTEXT - START_CONTEXT ] = LOG_LEVEL_WARN};
+static NSUInteger CDTLoggingLevels[] = {[0 ... END_CONTEXT - START_CONTEXT ] = LOG_LEVEL_WARN};
 
 #define LogError(context, frmt, ...) SYNC_LOG_OBJC_MAYBE(CDTLoggingLevels[context - START_CONTEXT], LOG_FLAG_ERROR, context, frmt, ##__VA_ARGS__)
 #define LogWarn(context, frmt, ...) ASYNC_LOG_OBJC_MAYBE(CDTLoggingLevels[context - START_CONTEXT], LOG_FLAG_WARN, context, frmt, ##__VA_ARGS__)
