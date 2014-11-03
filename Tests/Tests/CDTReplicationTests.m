@@ -27,6 +27,7 @@
 #import "TD_Revision.h"
 #import "TDPuller.h"
 #import "TDPusher.h"
+#import "CDTLogging.h"
 
 @interface CDTReplicationTests : CloudantSyncTests
 
@@ -84,6 +85,21 @@
     NSDictionary *pushDict = [push dictionaryForReplicatorDocument:&error];
     STAssertNil(error, @"Error creating dictionary. %@. Replicator: %@", error, push);
     STAssertEqualObjects(pushDict, expectedDictionary, @"push dictionary: %@", pushDict);
+    
+    
+    LogInfo(REPLICATION_LOG_CONTEXT, @"Log Info before change log level");
+    LogWarn(REPLICATION_LOG_CONTEXT, @"Log Warn before change log level");
+    LogError(REPLICATION_LOG_CONTEXT, @"Log Error before change log level");
+    LogVerbose(REPLICATION_LOG_CONTEXT, @"Log Verbose before change log level");
+    LogDebug(REPLICATION_LOG_CONTEXT, @"Log Debug before change log level");
+    
+    ChangeLogLevel(REPLICATION_LOG_CONTEXT, LOG_LEVEL_ALL);
+
+    LogInfo(REPLICATION_LOG_CONTEXT, @"Log Info");
+    LogWarn(REPLICATION_LOG_CONTEXT, @"Log Warn");
+    LogError(REPLICATION_LOG_CONTEXT, @"Log Error");
+    LogVerbose(REPLICATION_LOG_CONTEXT, @"Log Verbose");
+    LogDebug(REPLICATION_LOG_CONTEXT, @"Log Debug");
     
     //ensure that TDReplicatorManager makes the appropriate TDPuller object
     //The code to do this, seems, a bit precarious and this guards against any future

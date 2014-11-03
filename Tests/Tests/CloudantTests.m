@@ -15,12 +15,10 @@
 +(void)initialize
 {
     
-    if (self == [CloudantTests self]) {
         [DDLog addLogger:[DDTTYLogger sharedInstance]];
         for(int i=0;i<sizeof(CDTLoggingLevels);i++){
             CDTLoggingLevels[i] = LOG_LEVEL_ALL;
         }
-    }
 }
 
 @end
