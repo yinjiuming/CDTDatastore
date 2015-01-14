@@ -11,6 +11,10 @@
 		277992B918A24F0900BAB6ED /* ReplicationAcceptance+CRUD.m in Sources */ = {isa = PBXBuildFile; fileRef = 277992B718A24F0900BAB6ED /* ReplicationAcceptance+CRUD.m */; };
 		277992BB18A2503C00BAB6ED /* ReplicationAcceptance.h in Resources */ = {isa = PBXBuildFile; fileRef = 277992BA18A2503C00BAB6ED /* ReplicationAcceptance.h */; };
 		277992BC18A2503C00BAB6ED /* ReplicationAcceptance.h in Resources */ = {isa = PBXBuildFile; fileRef = 277992BA18A2503C00BAB6ED /* ReplicationAcceptance.h */; };
+		27A794221A66E2E6008BF288 /* CDTPullerByDocIdTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 27A794211A66E2E6008BF288 /* CDTPullerByDocIdTests.m */; };
+		27A794231A66E2E6008BF288 /* CDTPullerByDocIdTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 27A794211A66E2E6008BF288 /* CDTPullerByDocIdTests.m */; };
+		27A794241A66E2E6008BF288 /* CDTPullerByDocIdTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 27A794211A66E2E6008BF288 /* CDTPullerByDocIdTests.m */; };
+		27A794251A66E2E6008BF288 /* CDTPullerByDocIdTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 27A794211A66E2E6008BF288 /* CDTPullerByDocIdTests.m */; };
 		27A7E68B18997412007FAF1C /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27A7E675189973EE007FAF1C /* Foundation.framework */; };
 		27A7E68C18997412007FAF1C /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27A7E677189973EE007FAF1C /* UIKit.framework */; };
 		27A7E69218997412007FAF1C /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 27A7E69018997412007FAF1C /* InfoPlist.strings */; };
@@ -64,6 +68,7 @@
 		277992B618A24F0900BAB6ED /* ReplicationAcceptance+CRUD.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "ReplicationAcceptance+CRUD.h"; sourceTree = "<group>"; };
 		277992B718A24F0900BAB6ED /* ReplicationAcceptance+CRUD.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "ReplicationAcceptance+CRUD.m"; sourceTree = "<group>"; };
 		277992BA18A2503C00BAB6ED /* ReplicationAcceptance.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ReplicationAcceptance.h; sourceTree = "<group>"; };
+		27A794211A66E2E6008BF288 /* CDTPullerByDocIdTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CDTPullerByDocIdTests.m; sourceTree = "<group>"; };
 		27A7E675189973EE007FAF1C /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		27A7E677189973EE007FAF1C /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
 		27A7E67B189973EE007FAF1C /* ReplicationAcceptance-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "ReplicationAcceptance-Info.plist"; sourceTree = "<group>"; };
@@ -221,6 +226,7 @@
 				9FC2F12B19F070710032A074 /* ReplicatorURLProtocol.m */,
 				9FC2F12F19F72B710032A074 /* ReplicatorURLProtocolTester.h */,
 				9FC2F13019F72B710032A074 /* ReplicatorURLProtocolTester.m */,
+				27A794211A66E2E6008BF288 /* CDTPullerByDocIdTests.m */,
 			);
 			path = ReplicationAcceptance;
 			sourceTree = "<group>";
@@ -566,6 +572,7 @@
 				277992B818A24F0900BAB6ED /* ReplicationAcceptance+CRUD.m in Sources */,
 				27A7E6B118997673007FAF1C /* ReplicationAcceptance.m in Sources */,
 				9F1F14ED19870B88003E9F0B /* ReplicatorDelegates.m in Sources */,
+				27A794221A66E2E6008BF288 /* CDTPullerByDocIdTests.m in Sources */,
 				9FC2F12C19F070710032A074 /* ReplicatorURLProtocol.m in Sources */,
 				27A7E6AF189975B2007FAF1C /* CloudantReplicationBase.m in Sources */,
 				27DFEEB718DB4A0D0052D487 /* Attachments.m in Sources */,
@@ -581,6 +588,7 @@
 				277992B918A24F0900BAB6ED /* ReplicationAcceptance+CRUD.m in Sources */,
 				27A7E6B218997677007FAF1C /* ReplicationAcceptance.m in Sources */,
 				9F1F14EE19870B88003E9F0B /* ReplicatorDelegates.m in Sources */,
+				27A794231A66E2E6008BF288 /* CDTPullerByDocIdTests.m in Sources */,
 				9FC2F12D19F070710032A074 /* ReplicatorURLProtocol.m in Sources */,
 				27A7E6B0189975B2007FAF1C /* CloudantReplicationBase.m in Sources */,
 				27DFEEB818DB4A0D0052D487 /* Attachments.m in Sources */,
@@ -593,6 +601,7 @@
 			files = (
 				27ED108F192CF8DB00F75E95 /* CDTAppDelegate.m in Sources */,
 				27ED108B192CF8DB00F75E95 /* main.m in Sources */,
+				27A794241A66E2E6008BF288 /* CDTPullerByDocIdTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -602,6 +611,7 @@
 			files = (
 				27ED10AB192CF8FF00F75E95 /* ReplicationAcceptance.m in Sources */,
 				27ED10AC192CF8FF00F75E95 /* Attachments.m in Sources */,
+				27A794251A66E2E6008BF288 /* CDTPullerByDocIdTests.m in Sources */,
 				27ED10AD192CF8FF00F75E95 /* CloudantReplicationBase.m in Sources */,
 				27ED10AE192CF8FF00F75E95 /* CloudantReplicationBase+CompareDb.m in Sources */,
 				27ED10AF192CF8FF00F75E95 /* ReplicationAcceptance+CRUD.m in Sources */,

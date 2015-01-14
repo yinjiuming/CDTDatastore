@@ -63,6 +63,16 @@
          <Group
             location = "group:CDTReplicator"
             name = "CDTReplicator">
+            <Group
+               location = "container:"
+               name = "ByDocId">
+               <FileRef
+                  location = "group:Classes/common/CDTReplicator/ByDocId/CDTPullerByDocId.h">
+               </FileRef>
+               <FileRef
+                  location = "group:Classes/common/CDTReplicator/ByDocId/CDTPullerByDocId.m">
+               </FileRef>
+            </Group>
             <FileRef
                location = "group:CDTAbstractReplication.h">
             </FileRef>
