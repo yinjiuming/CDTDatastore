@@ -46,6 +46,8 @@
 
 @implementation CDTPullerByDocIdTests
 
+#pragma mark Setup/teardown
+
 - (void)setUp
 {
     [super setUp];
@@ -80,6 +82,30 @@
     [super tearDown];
 }
 
+#pragma mark Replication helper methods
+
+- (void)replicateFrom:(NSURL*)source
+                   to:(CDTDatastore*)target
+               docIds:(NSArray*)docIds
+{
+    
+    CDTPullerByDocId *p1 = [[CDTPullerByDocId alloc] initWithSource:source
+                                                             target:target
+                                                       docIdsToPull:docIds];
+    
+    dispatch_semaphore_t latch1 = dispatch_semaphore_create(0);
+    p1.completionBlock = ^{
+        dispatch_semaphore_signal(latch1);
+    };
+    [p1 start];
+    
+    dispatch_time_t wait_until = dispatch_walltime(DISPATCH_TIME_NOW, 600 * NSEC_PER_SEC);
+    long value1 = dispatch_semaphore_wait(latch1, wait_until);
+    NSLog(@"(T) Test thread did wait on latch (timeout=%@)", value1 == 0 ? @"NO" : @"YES");
+}
+
+#pragma mark Test we bring in only given docs
+
 -(void) testPullClientFilterUpdates2 {
     // create n docs and pull a subset of them, filtered by ID
     // update them and pull the same subset, filtered by ID
@@ -97,19 +123,9 @@
                               [NSString stringWithFormat:@"doc-%i", 23],
                               [NSString stringWithFormat:@"doc-%i", 70]];
     
-    CDTPullerByDocId *p1 = [[CDTPullerByDocId alloc] initWithSource:self.primaryRemoteDatabaseURL
-                                                             target:self.datastore
-                                                       docIdsToPull:filterDocIds];
-    
-    dispatch_semaphore_t latch1 = dispatch_semaphore_create(0);
-    p1.completionBlock = ^{
-        dispatch_semaphore_signal(latch1);
-    };
-    [p1 start];
-    
-    long value1 = dispatch_semaphore_wait(latch1, dispatch_walltime(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC));
-    NSLog(@"(T) Test thread did wait on latch (timeout=%@)", value1 == 0 ? @"NO" : @"YES");
-    
+    [self replicateFrom:self.primaryRemoteDatabaseURL
+                     to:self.datastore
+                 docIds:filterDocIds];
     
     XCTAssertEqual([self.datastore.database lastSequence], 4ll, @"Incorrect sequence number");
     XCTAssertEqual(self.datastore.documentCount, 4ul,
@@ -123,18 +139,9 @@
         [self createRemoteDocWithId:rev.docId body:dict];
     }
     
-    CDTPullerByDocId *p2 = [[CDTPullerByDocId alloc] initWithSource:self.primaryRemoteDatabaseURL
-                                                             target:self.datastore
-                                                       docIdsToPull:filterDocIds];
-    
-    dispatch_semaphore_t latch2 = dispatch_semaphore_create(0);
-    p2.completionBlock = ^{
-        dispatch_semaphore_signal(latch2);
-    };
-    [p2 start];
-    
-    long value2 = dispatch_semaphore_wait(latch2, dispatch_walltime(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC));
-    NSLog(@"(T) Test thread did wait on latch (timeout=%@)", value2 == 0 ? @"NO" : @"YES");
+    [self replicateFrom:self.primaryRemoteDatabaseURL
+                     to:self.datastore
+                 docIds:filterDocIds];
     
     for (CDTDocumentRevision *rev in [self.datastore getAllDocuments]) {
         XCTAssertTrue([rev.revId hasPrefix:@"2-"], @"rev id does not start 2-");
@@ -145,8 +152,186 @@
                    @"Incorrect number of documents updated");
 }
 
+-(void) testReplicateManyDocs {
+    // create n docs and pull a subset of them, filtered by ID
+    // update them and pull the same subset, filtered by ID
+    
+    // Create docs in remote database
+    NSLog(@"Creating documents...");
+    
+    int ndocs = 5000;
+    
+    [self createRemoteDocs:ndocs];
+    
+    NSMutableArray *filterDocIds = [NSMutableArray array];
+    for (int i = 1; i <= ndocs; i +=2) {
+        [filterDocIds addObject:[NSString stringWithFormat:@"doc-%i", i]];
+    }
+    
+    [self replicateFrom:self.primaryRemoteDatabaseURL
+                     to:self.datastore
+                 docIds:filterDocIds];
+    
+    XCTAssertEqual([self.datastore.database lastSequence], 
+                   filterDocIds.count, 
+                   @"Incorrect sequence number");
+    XCTAssertEqual(self.datastore.documentCount, filterDocIds.count,
+                   @"Incorrect number of documents created");
+    
+    // now do some updates
+    for (CDTDocumentRevision *rev in [self.datastore getAllDocuments]) {
+        NSMutableDictionary *dict = [rev.body mutableCopy];
+        [dict setValue:rev.revId forKey:@"_rev"];
+        [dict setValue:@YES forKey:@"updated"];
+        [self createRemoteDocWithId:rev.docId body:dict];
+    }
+    
+    [self replicateFrom:self.primaryRemoteDatabaseURL
+                     to:self.datastore
+                 docIds:filterDocIds];
+    
+    for (CDTDocumentRevision *rev in [self.datastore getAllDocuments]) {
+        XCTAssertTrue([rev.revId hasPrefix:@"2-"], @"rev id does not start 2-");
+    }
+    
+    XCTAssertEqual([self.datastore.database lastSequence], 
+                   filterDocIds.count * 2, 
+                   @"Incorrect sequence number");
+    XCTAssertEqual(self.datastore.documentCount, 
+                   filterDocIds.count,
+                   @"Incorrect number of documents updated");
+}
 
-#pragma mark helpers 
+#pragma mark Attachments
+
+- (void)testReplicateSeveralRemoteDocumentsWithAttachments
+{
+    
+    // { document ID: number of attachments to create }
+    NSDictionary *docs = @{@"attachments1": @(1),
+                           @"attachments3": @(3),
+                           @"attachments4": @(4)};
+    NSMutableArray *docIds = [NSMutableArray array];
+    for (NSString* docId in [docs keyEnumerator]) {
+        
+        [docIds addObject:docId];
+        NSString *revId = [self createRemoteDocumentWithId:docId
+                                                      body:@{@"hello": @"world"}
+                                               databaseURL:self.primaryRemoteDatabaseURL];
+        
+        NSInteger nAttachments = [docs[docId] integerValue];
+        for (NSInteger i = 1; i <= nAttachments; i++) {
+            NSString *name = [NSString stringWithFormat:@"txtDoc%li", (long)i];
+            NSData *txtData = [@"0123456789" dataUsingEncoding:NSUTF8StringEncoding];
+            revId = [self addAttachmentToRemoteDocumentWithId:docId
+                                                        revId:revId
+                                               attachmentName:name
+                                                  contentType:@"text/plain"
+                                                         data:txtData
+                                                  databaseURL:self.primaryRemoteDatabaseURL];
+        }
+    }
+    
+    //
+    // Replicate
+    //
+    
+    [self replicateFrom:self.primaryRemoteDatabaseURL
+                     to:self.datastore
+                 docIds:docIds];
+    
+    //
+    // Checks
+    //
+    
+    CDTDocumentRevision *rev;
+    
+    rev = [self.datastore getDocumentWithId:@"attachments1"
+                                      error:nil];
+    XCTAssertTrue([self isNumberOfAttachmentsForRevision:rev equalTo:(NSUInteger)1],
+                  @"Incorrect number of attachments");
+    
+    rev = [self.datastore getDocumentWithId:@"attachments3"
+                                      error:nil];
+    XCTAssertTrue([self isNumberOfAttachmentsForRevision:rev equalTo:(NSUInteger)3],
+                  @"Incorrect number of attachments");
+    
+    rev = [self.datastore getDocumentWithId:@"attachments4"
+                                      error:nil];
+    XCTAssertTrue([self isNumberOfAttachmentsForRevision:rev equalTo:(NSUInteger)4],
+                  @"Incorrect number of attachments");
+    
+    XCTAssertTrue([self compareAttachmentsForCurrentRevisions:self.datastore 
+                                                 withDatabase:self.primaryRemoteDatabaseURL],
+                  @"Local and remote database attachment comparison failed");
+}
+
+
+
+- (void)testReplicateManyRemoteAttachments
+{
+    NSUInteger nAttachments = 100;
+    
+    // Contains {attachmentName: attachmentContent} for later checking
+    NSMutableDictionary *originalAttachments = [NSMutableDictionary dictionary];
+    
+    
+    //
+    // Upload attachments to remote document
+    //
+    
+    NSString *docId = @"document1";
+    
+    NSString *revId = [self createRemoteDocumentWithId:docId
+                                                  body:@{@"hello": @"world"}
+                                           databaseURL:self.primaryRemoteDatabaseURL];
+    
+    for (NSInteger i = 1; i <= nAttachments; i++) {
+        NSString *name = [NSString stringWithFormat:@"txtDoc%li", (long)i];
+        NSString *content = [NSString stringWithFormat:@"doc%li", (long)i];
+        NSData *txtData = [content dataUsingEncoding:NSUTF8StringEncoding];
+        revId = [self addAttachmentToRemoteDocumentWithId:docId
+                                                    revId:revId
+                                           attachmentName:name
+                                              contentType:@"text/plain"
+                                                     data:txtData
+                                              databaseURL:self.primaryRemoteDatabaseURL];
+        originalAttachments[name] = txtData;
+    }
+    
+    //
+    // Replicate
+    //
+    
+    [self replicateFrom:self.primaryRemoteDatabaseURL
+                     to:self.datastore
+                 docIds:@[docId]];
+    
+    //
+    // Checks
+    //
+    
+    CDTDocumentRevision *rev;
+    rev = [self.datastore getDocumentWithId:docId
+                                      error:nil];
+    XCTAssertTrue([self isNumberOfAttachmentsForRevision:rev equalTo:nAttachments],
+                  @"Incorrect number of attachments");
+    
+    for (NSString *attachmentName in [originalAttachments keyEnumerator]) {
+        
+        CDTAttachment *a = [[rev attachments] objectForKey:attachmentName];
+        
+        XCTAssertNotNil(a, @"No attachment named %@", attachmentName);
+        
+        NSData *data = [a dataFromAttachmentContent];
+        NSData *originalData = originalAttachments[attachmentName];
+        
+        XCTAssertEqualObjects(data, originalData, @"attachment content didn't match");
+    }
+}
+
+
+#pragma mark Helpers 
 
 - (void)createRemoteDocs:(NSInteger)count
 {
@@ -198,6 +383,14 @@
     }] asJson];
     XCTAssertTrue([response.body.object objectForKey:@"ok"] != nil, @"Create document failed");
     return [response.body.object objectForKey:@"rev"];
+}
+
+- (BOOL)isNumberOfAttachmentsForRevision:(CDTDocumentRevision*)rev
+                                 equalTo:(NSUInteger)expected
+{
+    NSArray *attachments = [self.datastore attachmentsForRev:rev
+                                                       error:nil];
+    return [attachments count] == expected;
 }
 
 @end

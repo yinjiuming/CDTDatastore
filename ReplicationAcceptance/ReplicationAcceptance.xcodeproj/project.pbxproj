@@ -213,6 +213,7 @@
 				277992BA18A2503C00BAB6ED /* ReplicationAcceptance.h */,
 				27A7E67F189973EE007FAF1C /* ReplicationAcceptance.m */,
 				27DFEEB618DB4A0D0052D487 /* Attachments.m */,
+				27A794211A66E2E6008BF288 /* CDTPullerByDocIdTests.m */,
 				27A7E67A189973EE007FAF1C /* Supporting Files */,
 				27A7E6AD189975B2007FAF1C /* CloudantReplicationBase.h */,
 				27A7E6AE189975B2007FAF1C /* CloudantReplicationBase.m */,
@@ -226,7 +227,6 @@
 				9FC2F12B19F070710032A074 /* ReplicatorURLProtocol.m */,
 				9FC2F12F19F72B710032A074 /* ReplicatorURLProtocolTester.h */,
 				9FC2F13019F72B710032A074 /* ReplicatorURLProtocolTester.m */,
-				27A794211A66E2E6008BF288 /* CDTPullerByDocIdTests.m */,
 			);
 			path = ReplicationAcceptance;
 			sourceTree = "<group>";
