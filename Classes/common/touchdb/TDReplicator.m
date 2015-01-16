@@ -196,9 +196,21 @@ NSString* TDReplicatorStartedNotification = @"TDReplicatorStarted";
 
 - (void)setError:(NSError*)error
 {
-    if (error.code == NSURLErrorCancelled && $equal(error.domain, NSURLErrorDomain)) return;
+    BOOL canSetError = YES;
+    
+    // protect against setting certain errors
+    if (error.code == NSURLErrorCancelled && $equal(error.domain, NSURLErrorDomain)) {
+        canSetError = NO;
+    }
 
-    if (_error != error) {
+    // don't overwrite previously set errors that we know are fatal and need to retain
+    // for proper error reporting
+    if (_error.code == TDReplicatorErrorLocalDatabaseDeleted &&
+        $equal(_error.domain, TDInternalErrorDomain)) {
+        canSetError = NO;
+    }
+    
+    if (_error != error && canSetError) {
         _error = error;
         [self postProgressChanged];
     }
@@ -398,7 +410,10 @@ NSString* TDReplicatorStartedNotification = @"TDReplicatorStarted";
     //our responsibility to actually stop the thread.
     [_replicatorThread cancel];
     
-    [self stopped];
+    if (_running && _asyncTaskCount == 0) {
+        [self stopped];
+    }
+    
 }
 
 - (void)stopped
@@ -780,7 +795,7 @@ NSString* TDReplicatorStartedNotification = @"TDReplicatorStarted";
 
     _savingCheckpoint = YES;
     NSString* checkpointID = self.remoteCheckpointDocID;
-    [self sendAsyncRequest:@"PUT"
+    TDRemoteJSONRequest *request = [self sendAsyncRequest:@"PUT"
                       path:[@"_local/" stringByAppendingString:checkpointID]
                       body:body
               onCompletion:^(id response, NSError* error) {
@@ -796,10 +811,10 @@ NSString* TDReplicatorStartedNotification = @"TDReplicatorStarted";
                       self.remoteCheckpoint = body;
                       [_db setLastSequence:_lastSequence withCheckpointID:checkpointID];
                   }
-
-                  CDTLogVerbose(@"PUT last sequence %@ to checkpoint doc response: %@",
-                        _lastSequence, response);
-                  [self asyncTasksFinished:1];
+  
+                  CDTLogVerbose(CDTREPLICATION_LOG_CONTEXT,
+                                @"PUT last sequence %@ to checkpoint doc response: %@",
+                                _lastSequence, response);
                   if (_stopRunLoop) {
                       CDTLogVerbose(CDTREPLICATION_LOG_CONTEXT,
                                     @"%@ Final PUT checkpoint. Run loop will be stopped.", self);
@@ -808,6 +823,7 @@ NSString* TDReplicatorStartedNotification = @"TDReplicatorStarted";
                   if (_db && _overdueForSave)
                       [self saveLastSequence];  // start a save that was waiting on me
               }];
+    [self removeRemoteRequest:request];
 }
 
 @end
